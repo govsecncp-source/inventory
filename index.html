@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GS Office Inventory System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: rgba(26, 32, 53, 0.7);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary: #ec4899;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* --- Custom Alert (Toast) System --- */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .toast.success { background: rgba(16, 185, 129, 0.9); }
+        .toast.error { background: rgba(239, 68, 68, 0.9); }
+        .toast.warning { background: rgba(245, 158, 11, 0.9); }
+        
+        .toast.fade-out { animation: slideOut 0.3s ease-in forwards; }
+
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(120%); opacity: 0; }
+        }
+
+        /* --- Reusable Components --- */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.6);
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-danger { background: var(--danger); }
+        .btn-success { background: var(--success); }
+        .btn-small { padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 6px; }
+
+        /* --- Login Screen --- */
+        #login-view {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            z-index: 100;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            background: linear-gradient(to right, #a5b4fc, #fbcfe8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group { margin-bottom: 1.5rem; text-align: left; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem; }
+
+        /* --- Dashboard Layout --- */
+        .dashboard {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .main-content {
+            padding: 2rem 3rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* --- Stats Row (NEW) --- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-card span { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+        .stat-card h3 { font-size: 2.5rem; color: var(--text-main); }
+
+        /* --- Two Column Layout --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* --- Tables --- */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .status { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .status.pending { background: rgba(245,158,11,0.2); color: var(--warning); }
+        .status.approved { background: rgba(16,185,129,0.2); color: var(--success); }
+        .status.rejected { background: rgba(239,68,68,0.2); color: var(--danger); }
+
+        .qty-controls { display: flex; align-items: center; gap: 8px; }
+        .qty-controls input { width: 60px; text-align: center; padding: 0.4rem; }
+        .qty-controls button { padding: 0.4rem 0.8rem; background: var(--bg-card); border: 1px solid var(--border); }
+        
+        /* Search Bar */
+        .search-bar { margin-bottom: 1rem; display: flex; gap: 1rem; }
+        .search-bar input { flex: 1; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+
+    <!-- Login View -->
+    <div id="login-view">
+        <div class="card login-box">
+            <h2>GS Office Inventory</h2>
+            <div class="form-group">
+                <label>System ID</label>
+                <input type="text" id="username" placeholder="admin or subject 01">
+            </div>
+            <div class="form-group">
+                <label>Access Code</label>
+                <input type="password" id="password" placeholder="••••••••">
+            </div>
+            <button style="width: 100%; margin-top: 1rem;" onclick="login()">Authenticate</button>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="dashboard">
+        <header>
+            <h2 style="background: linear-gradient(to right, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Admin Command Center</h2>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="color: var(--text-muted); font-weight: 500;">Admin Active</span>
+                <button class="btn-small" style="background: var(--bg-card); border: 1px solid var(--border);" onclick="logout()">Terminate Session</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- NEW: Stats Grid -->
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <span>Total Unique Items</span>
+                    <h3 id="stat-total-items">0</h3>
+                </div>
+                <div class="card stat-card">
+                    <span>Total Stock Quantity</span>
+                    <h3 id="stat-total-stock">0</h3>
+                </div>
+                <div class="card stat-card">
+                    <span>Pending Requests</span>
+                    <h3 id="stat-pending-req">0</h3>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Add Item Form -->
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Deploy New Asset</h3>
+                    <div class="form-group">
+                        <label>Asset Designation (Name)</label>
+                        <input type="text" id="new-item-name" placeholder="e.g., Quantum Processor">
+                    </div>
+                    <div class="form-group">
+                        <label>Initial Units</label>
+                        <input type="number" id="new-item-qty" placeholder="0" min="0">
+                    </div>
+                    <button style="width: 100%; margin-top: 1rem;" onclick="addItem()">Add to Database</button>
+                </div>
+
+                <!-- Tables Section -->
+                <div style="display: flex; flex-direction: column; gap: 2rem;">
+                    
+                    <!-- Inventory List -->
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="font-size: 1.2rem;">Asset Inventory</h3>
+                        </div>
+                        
+                        <!-- NEW: Search/Filter -->
+                        <div class="search-bar">
+                            <input type="text" id="search-inventory" placeholder="Search assets by name or ID..." onkeyup="filterInventory()">
+                        </div>
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Asset ID</th>
+                                        <th>Designation</th>
+                                        <th>Stock Level</th>
+                                        <th>Quick Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-inventory-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Requests List -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Requisition Queue</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Asset Required</th>
+                                        <th>Units</th>
+                                        <th>Status</th>
+                                        <th>Authorization</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-requests-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Dashboard -->
+    <div id="user-dashboard" class="dashboard">
+        <header>
+            <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Subject Requisition Portal</h2>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span id="user-greeting" style="color: var(--text-muted); font-weight: 500;"></span>
+                <button class="btn-small" style="background: var(--bg-card); border: 1px solid var(--border);" onclick="logout()">Terminate Session</button>
+            </div>
+        </header>
+
+        <div class="main-content content-grid">
+            <!-- Request Form -->
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Submit Requisition</h3>
+                <div class="form-group">
+                    <label>Select Asset</label>
+                    <select id="request-item-select"></select>
+                </div>
+                <div class="form-group">
+                    <label>Units Required</label>
+                    <input type="number" id="request-item-qty" value="1" min="1">
+                </div>
+                <button style="width: 100%; margin-top: 1rem; background: linear-gradient(135deg, #10b981, #059669);" onclick="submitRequest()">Transmit Request</button>
+            </div>
+
+            <!-- My Requests -->
+            <div class="card">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">My Requisition Log</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Log ID</th>
+                                <th>Asset Designation</th>
+                                <th>Units</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-requests-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Custom Alert System ---
+        function customAlert(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            // Add icon based on type
+            let icon = '✓';
+            if(type === 'error') icon = '✕';
+            if(type === 'warning') icon = '⚠';
+
+            toast.innerHTML = `<span style="font-weight:bold; font-size:1.1rem;">${icon}</span> ${message}`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                toast.addEventListener('animationend', () => toast.remove());
+            }, 3000);
+        }
+
+
+        // --- Database & User Setup ---
+        const validUsers = {
+            "admin": { role: "admin", pass: "adminpassword" }
+        };
+        for(let i=1; i<=9; i++) {
+            validUsers[`subject 0${i}`] = { role: "user", pass: `password0${i}` };
+        }
+
+        let inventory = JSON.parse(localStorage.getItem('nexgen_inventory')) || [];
+        let requests = JSON.parse(localStorage.getItem('nexgen_requests')) || [];
+        let currentUser = null;
+
+        function saveData() {
+            localStorage.setItem('nexgen_inventory', JSON.stringify(inventory));
+            localStorage.setItem('nexgen_requests', JSON.stringify(requests));
+            if(currentUser && currentUser.role === 'admin') updateAdminStats();
+        }
+
+        // --- Authentication ---
+        function login() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+
+            if (validUsers[user] && validUsers[user].pass === pass) {
+                currentUser = { username: user, role: validUsers[user].role };
+                document.getElementById('login-view').style.display = 'none';
+                customAlert('Authentication successful', 'success');
+                
+                if (currentUser.role === 'admin') {
+                    document.getElementById('admin-dashboard').style.display = 'flex';
+                    renderAdmin();
+                } else {
+                    document.getElementById('user-dashboard').style.display = 'flex';
+                    document.getElementById('user-greeting').innerText = `ID: ${user.toUpperCase()}`;
+                    renderUser();
+                }
+            } else {
+                customAlert('Invalid system ID or access code', 'error');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('admin-dashboard').style.display = 'none';
+            document.getElementById('user-dashboard').style.display = 'none';
+            document.getElementById('login-view').style.display = 'flex';
+            customAlert('Session terminated successfully', 'warning');
+        }
+
+        // --- Admin Functions ---
+        function renderAdmin() {
+            renderInventoryList();
+            renderAdminRequests();
+            updateAdminStats();
+        }
+
+        function updateAdminStats() {
+            document.getElementById('stat-total-items').innerText = inventory.length;
+            
+            const totalStock = inventory.reduce((sum, item) => sum + parseInt(item.qty), 0);
+            document.getElementById('stat-total-stock').innerText = totalStock;
+
+            const pending = requests.filter(r => r.status === 'Pending').length;
+            document.getElementById('stat-pending-req').innerText = pending;
+        }
+
+        function addItem() {
+            const name = document.getElementById('new-item-name').value.trim();
+            const qty = parseInt(document.getElementById('new-item-qty').value);
+
+            if (!name || isNaN(qty) || qty < 0) {
+                customAlert("Please input valid asset parameters.", "error");
+                return;
+            }
+
+            const newItem = {
+                id: 'NX-' + Math.floor(Math.random() * 9000 + 1000), // Looks cooler like NX-4521
+                name: name,
+                qty: qty
+            };
+
+            inventory.push(newItem);
+            saveData();
+            renderInventoryList();
+            
+            document.getElementById('new-item-name').value = '';
+            document.getElementById('new-item-qty').value = '';
+            customAlert(`Asset ${name} added to database.`, "success");
+        }
+
+        function updateQty(id, changeAmount) {
+            const item = inventory.find(i => i.id === id);
+            const inputField = document.getElementById(`qty-input-${id}`);
+            let newQty = parseInt(inputField.value) + changeAmount;
+            
+            if (newQty < 0) {
+                customAlert("Stock cannot be negative.", "warning");
+                return;
+            }
+            
+            item.qty = newQty;
+            inputField.value = newQty;
+            saveData();
+            customAlert(`Stock updated for ${item.name}`, "success");
+        }
+
+        function updateDirectQty(id, val) {
+            const item = inventory.find(i => i.id === id);
+            const newQty = Math.max(0, parseInt(val) || 0);
+            item.qty = newQty;
+            saveData();
+            renderInventoryList();
+            customAlert(`Stock updated to ${newQty}`, "success");
+        }
+
+        function renderInventoryList(filterText = "") {
+            const tbody = document.getElementById('admin-inventory-list');
+            tbody.innerHTML = '';
+
+            const filtered = inventory.filter(item => 
+                item.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                item.id.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No assets found.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace; color: var(--primary);">${item.id}</td>
+                        <td style="font-weight: 500;">${item.name}</td>
+                        <td>
+                            <div class="qty-controls">
+                                <button onclick="updateQty('${item.id}', -1)">-</button>
+                                <input type="number" id="qty-input-${item.id}" value="${item.qty}" onchange="updateDirectQty('${item.id}', this.value)">
+                                <button onclick="updateQty('${item.id}', 1)">+</button>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn-small btn-danger" onclick="deleteItem('${item.id}')">Purge</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterInventory() {
+            const searchVal = document.getElementById('search-inventory').value;
+            renderInventoryList(searchVal);
+        }
+
+        function deleteItem(id) {
+            inventory = inventory.filter(i => i.id !== id);
+            saveData();
+            renderInventoryList();
+            customAlert("Asset purged from database.", "warning");
+        }
+
+        function renderAdminRequests() {
+            const tbody = document.getElementById('admin-requests-list');
+            tbody.innerHTML = '';
+
+            const sortedReqs = [...requests].sort((a,b) => a.status === 'Pending' ? -1 : 1);
+
+            if(sortedReqs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Queue is empty.</td></tr>`;
+            }
+
+            sortedReqs.forEach(req => {
+                let actions = '<span style="color:var(--text-muted)">Locked</span>';
+                if (req.status === 'Pending') {
+                    actions = `
+                        <div style="display:flex; gap: 8px;">
+                            <button class="btn-small btn-success" onclick="manageRequest('${req.id}', 'Approved')">Approve</button>
+                            <button class="btn-small btn-danger" onclick="manageRequest('${req.id}', 'Rejected')">Reject</button>
+                        </div>
+                    `;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-transform: capitalize; font-weight: 500;">${req.user}</td>
+                        <td>${req.itemName}</td>
+                        <td>${req.qty}</td>
+                        <td><span class="status ${req.status.toLowerCase()}">${req.status}</span></td>
+                        <td>${actions}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function manageRequest(reqId, newStatus) {
+            const req = requests.find(r => r.id === reqId);
+            const item = inventory.find(i => i.id === req.itemId);
+
+            if (newStatus === 'Approved') {
+                if (!item) {
+                    customAlert("Asset no longer exists in database.", "error");
+                    req.status = 'Rejected';
+                } else if (item.qty < req.qty) {
+                    customAlert("Insufficient stock to authorize requisition.", "error");
+                    return;
+                } else {
+                    item.qty -= req.qty;
+                    customAlert("Requisition authorized.", "success");
+                }
+            } else {
+                customAlert("Requisition rejected.", "warning");
+            }
+
+            req.status = newStatus;
+            saveData();
+            renderAdmin(); 
+        }
+
+        // --- User Functions ---
+        function renderUser() {
+            const select = document.getElementById('request-item-select');
+            select.innerHTML = '<option value="">-- Select Asset --</option>';
+            
+            inventory.forEach(item => {
+                if(item.qty > 0) {
+                    select.innerHTML += `<option value="${item.id}">${item.name} [Available: ${item.qty}]</option>`;
+                }
+            });
+
+            renderUserRequests();
+        }
+
+        function submitRequest() {
+            const itemId = document.getElementById('request-item-select').value;
+            const qty = parseInt(document.getElementById('request-item-qty').value);
+
+            if (!itemId || isNaN(qty) || qty <= 0) {
+                customAlert("Invalid requisition parameters.", "error");
+                return;
+            }
+
+            const item = inventory.find(i => i.id === itemId);
+            if (qty > item.qty) {
+                customAlert(`Cannot exceed available stock [${item.qty}].`, "warning");
+                return;
+            }
+
+            const newReq = {
+                id: 'LOG-' + Math.floor(Math.random() * 90000 + 10000),
+                user: currentUser.username,
+                itemId: item.id,
+                itemName: item.name,
+                qty: qty,
+                status: 'Pending'
+            };
+
+            requests.push(newReq);
+            saveData();
+            
+            document.getElementById('request-item-qty').value = 1;
+            renderUser();
+            customAlert("Requisition transmitted to Command.", "success");
+        }
+
+        function renderUserRequests() {
+            const tbody = document.getElementById('user-requests-list');
+            tbody.innerHTML = '';
+
+            const myRequests = requests.filter(r => r.user === currentUser.username).reverse();
+
+            if(myRequests.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No log entries found.</td></tr>`;
+            }
+
+            myRequests.forEach(req => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-family: monospace; color: var(--secondary);">${req.id}</td>
+                        <td style="font-weight: 500;">${req.itemName}</td>
+                        <td>${req.qty}</td>
+                        <td><span class="status ${req.status.toLowerCase()}">${req.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
