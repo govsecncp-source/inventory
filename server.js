@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 
@@ -51,9 +52,9 @@ const RequestSchema = new mongoose.Schema({
 const Item = mongoose.models.Item || mongoose.model('Item', ItemSchema);
 const Request = mongoose.models.Request || mongoose.model('Request', RequestSchema);
 
-// Root Route (Fixes "Cannot GET /")
+// Root Route - Serves the Frontend HTML Dashboard
 app.get('/', (req, res) => {
-    res.status(200).json({ message: 'Inventory API is running successfully!' });
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Inventory Routes
