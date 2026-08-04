@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GS Office Inventory System</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
         :root {
             --bg-main: #0b0f19;
@@ -39,7 +39,7 @@
             background-attachment: fixed;
         }
 
-        /* --- Custom Alert (Toast) System --- */
+        /* --- Custom Alert System --- */
         #toast-container {
             position: fixed;
             top: 20px;
@@ -68,7 +68,6 @@
         .toast.success { background: rgba(16, 185, 129, 0.9); }
         .toast.error { background: rgba(239, 68, 68, 0.9); }
         .toast.warning { background: rgba(245, 158, 11, 0.9); }
-        
         .toast.fade-out { animation: slideOut 0.3s ease-in forwards; }
 
         @keyframes slideIn {
@@ -125,7 +124,9 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
-
+        
+        .btn-outline { background: transparent; border: 1px solid var(--border); }
+        .btn-outline:hover { background: rgba(255, 255, 255, 0.05); box-shadow: none; }
         .btn-danger { background: var(--danger); }
         .btn-success { background: var(--success); }
         .btn-small { padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 6px; }
@@ -167,16 +168,43 @@
         }
 
         header {
-            padding: 1.5rem 3rem;
+            padding: 1rem 3rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
-            background: rgba(11, 15, 25, 0.8);
+            background: rgba(11, 15, 25, 0.85);
             backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
             z-index: 10;
+        }
+
+        /* --- Navigation Bar --- */
+        .admin-nav {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1.2rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #ffffff;
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
         }
 
         .main-content {
@@ -189,10 +217,20 @@
             gap: 2rem;
         }
 
-        /* --- Stats Row (NEW) --- */
+        .page-view {
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .page-view.active {
+            display: flex;
+        }
+
+        /* --- Stats Row --- */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1.5rem;
         }
 
@@ -202,34 +240,118 @@
             gap: 0.5rem;
         }
 
-        .stat-card span { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
-        .stat-card h3 { font-size: 2.5rem; color: var(--text-main); }
+        .stat-card span { color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
+        .stat-card h3 { font-size: 2.2rem; color: var(--text-main); }
+        .stat-card.warning-card { border-left: 4px solid var(--warning); }
 
         /* --- Two Column Layout --- */
         .content-grid {
             display: grid;
-            grid-template-columns: 350px 1fr;
+            grid-template-columns: 400px 1fr;
             gap: 2rem;
             align-items: start;
         }
 
         /* --- Tables --- */
         .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
         th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; }
         tr:hover td { background: rgba(255,255,255,0.02); }
 
-        .status { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .status { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
         .status.pending { background: rgba(245,158,11,0.2); color: var(--warning); }
         .status.approved { background: rgba(16,185,129,0.2); color: var(--success); }
         .status.rejected { background: rgba(239,68,68,0.2); color: var(--danger); }
 
-        .qty-controls { display: flex; align-items: center; gap: 8px; }
-        .qty-controls input { width: 60px; text-align: center; padding: 0.4rem; }
-        .qty-controls button { padding: 0.4rem 0.8rem; background: var(--bg-card); border: 1px solid var(--border); }
-        
-        /* Search Bar */
+        .badge-warning { background: rgba(245,158,11,0.25); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .badge-danger { background: rgba(239,68,68,0.25); color: #f87171; border: 1px solid rgba(239,68,68,0.4); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .badge-ok { background: rgba(16,185,129,0.15); color: #34d399; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; }
+        .badge-deposit { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
+        .badge-withdrawal { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
+
+        /* High Visibility Stock Controls */
+        .qty-controls { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            background: rgba(15, 23, 42, 0.95);
+            border: 1.5px solid rgba(99, 102, 241, 0.4);
+            border-radius: 10px;
+            padding: 4px;
+        }
+
+        .qty-controls input { 
+            width: 80px; 
+            text-align: center; 
+            padding: 0.3rem;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #ffffff;
+            background: transparent;
+            border: none;
+        }
+
+        .qty-controls button { 
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 6px;
+            background: rgba(99, 102, 241, 0.25);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            color: #ffffff;
+        }
+
+        /* User Group Card Styling */
+        .user-group-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .user-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #a5b4fc;
+        }
+        .user-badge-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .item-list-badge { display: flex; flex-direction: column; gap: 6px; }
+        .item-row-detail {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(11, 15, 25, 0.5);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
         .search-bar { margin-bottom: 1rem; display: flex; gap: 1rem; }
         .search-bar input { flex: 1; }
 
@@ -237,7 +359,6 @@
 </head>
 <body>
 
-    <!-- Toast Notifications Container -->
     <div id="toast-container"></div>
 
     <!-- Login View -->
@@ -260,93 +381,217 @@
     <div id="admin-dashboard" class="dashboard">
         <header>
             <h2 style="background: linear-gradient(to right, #6366f1, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Admin Command Center</h2>
+            
+            <!-- Page Navigation Bar -->
+            <div class="admin-nav">
+                <div class="nav-tab active" onclick="switchAdminPage('page-overview', this)">Overview & Control</div>
+                <div class="nav-tab" onclick="switchAdminPage('page-periodic-summary', this)">Periodic Summary</div>
+                <div class="nav-tab" onclick="switchAdminPage('page-item-summary', this)">Item-Wise Breakdown</div>
+            </div>
+
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <span style="color: var(--text-muted); font-weight: 500;">Admin Active</span>
-                <button class="btn-small" style="background: var(--bg-card); border: 1px solid var(--border);" onclick="logout()">Terminate Session</button>
+                <button class="btn-small btn-outline" onclick="logout()">Terminate Session</button>
             </div>
         </header>
 
         <div class="main-content">
-            <!-- NEW: Stats Grid -->
-            <div class="stats-grid">
-                <div class="card stat-card">
-                    <span>Total Unique Items</span>
-                    <h3 id="stat-total-items">0</h3>
+
+            <!-- PAGE 1: OVERVIEW & CONTROL -->
+            <div id="page-overview" class="page-view active">
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <span>Total Unique Items</span>
+                        <h3 id="stat-total-items">0</h3>
+                    </div>
+                    <div class="card stat-card warning-card">
+                        <span>Low Stock Alerts</span>
+                        <h3 id="stat-low-stock" style="color: var(--warning);">0</h3>
+                    </div>
+                    <div class="card stat-card">
+                        <span>Pending Request Lists</span>
+                        <h3 id="stat-pending-req">0</h3>
+                    </div>
                 </div>
-                <div class="card stat-card">
-                    <span>Total Stock Quantity</span>
-                    <h3 id="stat-total-stock">0</h3>
-                </div>
-                <div class="card stat-card">
-                    <span>Pending Requests</span>
-                    <h3 id="stat-pending-req">0</h3>
+
+                <div class="content-grid">
+                    <!-- Deploy New Item -->
+                    <div class="card">
+                        <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Deploy New Asset</h3>
+                        <div class="form-group">
+                            <label>Asset Designation (Name)</label>
+                            <input type="text" id="new-item-name" placeholder="e.g., Quantum Processor">
+                        </div>
+                        <div class="form-group">
+                            <label>Initial Units</label>
+                            <input type="number" id="new-item-qty" placeholder="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Low Stock Warning Level (Min Limit)</label>
+                            <input type="number" id="new-item-min-qty" placeholder="5" min="1" value="5">
+                        </div>
+                        <button style="width: 100%; margin-top: 1rem;" onclick="addItem()">Add to Database</button>
+                    </div>
+
+                    <!-- Asset Inventory List -->
+                    <div style="display: flex; flex-direction: column; gap: 2rem;">
+                        <div class="card">
+                            <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">Asset Inventory</h3>
+                            <div class="search-bar">
+                                <input type="text" id="search-inventory" placeholder="Search assets by name..." onkeyup="filterInventory()">
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Designation</th>
+                                            <th>Stock Level</th>
+                                            <th>Warning Status</th>
+                                            <th>Quick Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-inventory-list"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Itemized Pending Breakdown -->
+                        <div class="card">
+                            <h3 style="font-size: 1.2rem; color: #fbcfe8; margin-bottom: 0.5rem;">📊 Itemized Pending Request Breakdown</h3>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                                View individual total pending unit counts separated by each item.
+                            </p>
+                            <div class="search-bar">
+                                <input type="text" id="search-pending-breakdown" placeholder="Filter pending items..." onkeyup="filterPendingBreakdown()">
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Asset Designation</th>
+                                            <th>Separate Pending Count</th>
+                                            <th>In-Stock Available</th>
+                                            <th>Fulfillment Readiness</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-pending-breakdown-list"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Requests List -->
+                        <div class="card">
+                            <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Requisition Queue (Separated by User)</h3>
+                            <div id="admin-requests-container"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="content-grid">
-                <!-- Add Item Form -->
+            <!-- PAGE 2: PERIODIC STOCK SUMMARY REPORT -->
+            <div id="page-periodic-summary" class="page-view">
                 <div class="card">
-                    <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Deploy New Asset</h3>
-                    <div class="form-group">
-                        <label>Asset Designation (Name)</label>
-                        <input type="text" id="new-item-name" placeholder="e.g., Quantum Processor">
-                    </div>
-                    <div class="form-group">
-                        <label>Initial Units</label>
-                        <input type="number" id="new-item-qty" placeholder="0" min="0">
-                    </div>
-                    <button style="width: 100%; margin-top: 1rem;" onclick="addItem()">Add to Database</button>
-                </div>
-
-                <!-- Tables Section -->
-                <div style="display: flex; flex-direction: column; gap: 2rem;">
-                    
-                    <!-- Inventory List -->
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3 style="font-size: 1.2rem;">Asset Inventory</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.3rem; color: #a5b4fc;">📈 Periodic Stock Summary & Audit Report</h3>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                                Filter total stock deposits and withdrawals for a specific date range.
+                            </p>
                         </div>
-                        
-                        <!-- NEW: Search/Filter -->
-                        <div class="search-bar">
-                            <input type="text" id="search-inventory" placeholder="Search assets by name or ID..." onkeyup="filterInventory()">
-                        </div>
-
-                        <div class="table-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Asset ID</th>
-                                        <th>Designation</th>
-                                        <th>Stock Level</th>
-                                        <th>Quick Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="admin-inventory-list"></tbody>
-                            </table>
+                        <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">From Date:</label>
+                                <input type="date" id="summary-start-date" onchange="generatePeriodSummary()" style="padding: 0.5rem 0.8rem;">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">To Date:</label>
+                                <input type="date" id="summary-end-date" onchange="generatePeriodSummary()" style="padding: 0.5rem 0.8rem;">
+                            </div>
+                            <button class="btn-small" onclick="generatePeriodSummary()" style="height: 38px;">Generate Report</button>
                         </div>
                     </div>
 
-                    <!-- Requests List -->
-                    <div class="card">
-                        <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Requisition Queue</h3>
-                        <div class="table-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Subject</th>
-                                        <th>Asset Required</th>
-                                        <th>Units</th>
-                                        <th>Status</th>
-                                        <th>Authorization</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="admin-requests-list"></tbody>
-                            </table>
+                    <!-- Summary KPI Cards -->
+                    <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                        <div class="card" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
+                            <span style="color: #34d399; font-size: 0.85rem; font-weight: 600;">📥 Total Stock Deposited</span>
+                            <h3 id="period-total-deposits" style="color: #10b981; font-size: 2rem; margin-top: 4px;">0 units</h3>
                         </div>
+                        <div class="card" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);">
+                            <span style="color: #f87171; font-size: 0.85rem; font-weight: 600;">📤 Total Stock Withdrawn</span>
+                            <h3 id="period-total-withdrawals" style="color: #ef4444; font-size: 2rem; margin-top: 4px;">0 units</h3>
+                        </div>
+                        <div class="card" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3);">
+                            <span style="color: #a5b4fc; font-size: 0.85rem; font-weight: 600;">📊 Net Stock Movement</span>
+                            <h3 id="period-net-shift" style="color: #818cf8; font-size: 2rem; margin-top: 4px;">0 units</h3>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Transaction ID</th>
+                                    <th>Type</th>
+                                    <th>Asset Designation</th>
+                                    <th>Units</th>
+                                </tr>
+                            </thead>
+                            <tbody id="period-transactions-list">
+                                <tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">Select dates to view transaction records.</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+
+            <!-- PAGE 3: ITEM-WISE MOVEMENT SUMMARY -->
+            <div id="page-item-summary" class="page-view">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                        <div>
+                            <h3 style="font-size: 1.3rem; color: #fbcfe8;">📦 Item-Wise Movement & Period Balances</h3>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                                Detailed deposit and withdrawal total summary breakdown per individual item.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">From Date:</label>
+                                <input type="date" id="item-summary-start-date" onchange="generateItemWiseSummary()" style="padding: 0.5rem 0.8rem;">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <label style="font-size: 0.75rem; color: var(--text-muted);">To Date:</label>
+                                <input type="date" id="item-summary-end-date" onchange="generateItemWiseSummary()" style="padding: 0.5rem 0.8rem;">
+                            </div>
+                            <button class="btn-small" onclick="generateItemWiseSummary()" style="height: 38px;">Recalculate Summary</button>
+                        </div>
+                    </div>
+
+                    <div class="search-bar">
+                        <input type="text" id="search-item-summary" placeholder="Search items in breakdown..." onkeyup="filterItemWiseSummary()">
+                    </div>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Asset Designation</th>
+                                    <th>Period Deposits</th>
+                                    <th>Period Withdrawals</th>
+                                    <th>Net Period Change</th>
+                                    <th>Current Available Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="item-wise-summary-list">
+                                <tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No items recorded yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -356,26 +601,45 @@
             <h2 style="background: linear-gradient(to right, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Subject Requisition Portal</h2>
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <span id="user-greeting" style="color: var(--text-muted); font-weight: 500;"></span>
-                <button class="btn-small" style="background: var(--bg-card); border: 1px solid var(--border);" onclick="logout()">Terminate Session</button>
+                <button class="btn-small btn-outline" onclick="logout()">Terminate Session</button>
             </div>
         </header>
 
         <div class="main-content content-grid">
-            <!-- Request Form -->
-            <div class="card">
-                <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Submit Requisition</h3>
-                <div class="form-group">
-                    <label>Select Asset</label>
-                    <select id="request-item-select"></select>
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Add to Requisition List</h3>
+                    <div class="form-group">
+                        <label>Select Asset</label>
+                        <select id="request-item-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Units Required</label>
+                        <input type="number" id="request-item-qty" value="1" min="1">
+                    </div>
+                    <button class="btn-outline" style="width: 100%; margin-top: 1rem;" onclick="addToCart()">+ Add to Draft</button>
                 </div>
-                <div class="form-group">
-                    <label>Units Required</label>
-                    <input type="number" id="request-item-qty" value="1" min="1">
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">Current Draft List</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Asset Designation</th>
+                                    <th>Units</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requisition-cart-list">
+                                <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">List is empty.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button style="width: 100%; margin-top: 1.5rem; background: linear-gradient(135deg, #10b981, #059669);" onclick="submitCart()">Transmit List Request</button>
                 </div>
-                <button style="width: 100%; margin-top: 1rem; background: linear-gradient(135deg, #10b981, #059669);" onclick="submitRequest()">Transmit Request</button>
             </div>
 
-            <!-- My Requests -->
             <div class="card">
                 <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem;">My Requisition Log</h3>
                 <div class="table-container">
@@ -383,8 +647,7 @@
                         <thead>
                             <tr>
                                 <th>Log ID</th>
-                                <th>Asset Designation</th>
-                                <th>Units</th>
+                                <th>Requested Asset List</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -396,13 +659,11 @@
     </div>
 
     <script>
-        // --- Custom Alert System ---
         function customAlert(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             
-            // Add icon based on type
             let icon = '✓';
             if(type === 'error') icon = '✕';
             if(type === 'warning') icon = '⚠';
@@ -416,8 +677,6 @@
             }, 3000);
         }
 
-
-        // --- Database & User Setup ---
         const validUsers = {
             "admin": { role: "admin", pass: "adminpassword" }
         };
@@ -426,16 +685,54 @@
         }
 
         let inventory = JSON.parse(localStorage.getItem('nexgen_inventory')) || [];
-        let requests = JSON.parse(localStorage.getItem('nexgen_requests')) || [];
+        let rawRequests = JSON.parse(localStorage.getItem('nexgen_requests')) || [];
+        let transactions = JSON.parse(localStorage.getItem('nexgen_transactions')) || [];
+        
+        let requests = rawRequests.map(req => {
+            if (!req.items) {
+                return {
+                    id: req.id,
+                    user: req.user,
+                    items: [{ itemId: req.itemId, itemName: req.itemName, qty: req.qty }],
+                    status: req.status
+                };
+            }
+            return req;
+        });
+
+        let currentCart = [];
         let currentUser = null;
 
         function saveData() {
             localStorage.setItem('nexgen_inventory', JSON.stringify(inventory));
             localStorage.setItem('nexgen_requests', JSON.stringify(requests));
+            localStorage.setItem('nexgen_transactions', JSON.stringify(transactions));
             if(currentUser && currentUser.role === 'admin') updateAdminStats();
         }
 
-        // --- Authentication ---
+        function logTransaction(type, itemName, qty) {
+            transactions.push({
+                id: 'TX-' + Math.floor(Math.random() * 90000 + 10000),
+                type: type,
+                itemName: itemName,
+                qty: Math.abs(parseInt(qty)),
+                timestamp: new Date().toISOString()
+            });
+            saveData();
+        }
+
+        /* --- Admin Multi-Page Switching --- */
+        function switchAdminPage(pageId, tabElem) {
+            document.querySelectorAll('.page-view').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(pageId).classList.add('active');
+            if(tabElem) tabElem.classList.add('active');
+
+            if(pageId === 'page-periodic-summary') generatePeriodSummary();
+            if(pageId === 'page-item-summary') generateItemWiseSummary();
+        }
+
         function login() {
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value;
@@ -447,10 +744,13 @@
                 
                 if (currentUser.role === 'admin') {
                     document.getElementById('admin-dashboard').style.display = 'flex';
+                    setDefaultDatePickers();
                     renderAdmin();
                 } else {
                     document.getElementById('user-dashboard').style.display = 'flex';
                     document.getElementById('user-greeting').innerText = `ID: ${user.toUpperCase()}`;
+                    currentCart = [];
+                    renderCart();
                     renderUser();
                 }
             } else {
@@ -460,6 +760,7 @@
 
         function logout() {
             currentUser = null;
+            currentCart = [];
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
             document.getElementById('admin-dashboard').style.display = 'none';
@@ -468,26 +769,166 @@
             customAlert('Session terminated successfully', 'warning');
         }
 
-        // --- Admin Functions ---
+        function setDefaultDatePickers() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            const startStr = firstDay.toISOString().split('T')[0];
+            const endStr = today.toISOString().split('T')[0];
+
+            document.getElementById('summary-start-date').value = startStr;
+            document.getElementById('summary-end-date').value = endStr;
+            
+            document.getElementById('item-summary-start-date').value = startStr;
+            document.getElementById('item-summary-end-date').value = endStr;
+        }
+
+        /* --- Page 2: Periodic Summary Generator --- */
+        function generatePeriodSummary() {
+            const startVal = document.getElementById('summary-start-date').value;
+            const endVal = document.getElementById('summary-end-date').value;
+
+            if (!startVal || !endVal) return;
+
+            const startDate = new Date(startVal + "T00:00:00");
+            const endDate = new Date(endVal + "T23:59:59");
+
+            const periodTx = transactions.filter(t => {
+                const txDate = new Date(t.timestamp);
+                return txDate >= startDate && txDate <= endDate;
+            });
+
+            let totalDeposits = 0;
+            let totalWithdrawals = 0;
+
+            const tbody = document.getElementById('period-transactions-list');
+            tbody.innerHTML = '';
+
+            if (periodTx.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No transaction logs found for the selected period.</td></tr>`;
+            } else {
+                periodTx.slice().reverse().forEach(tx => {
+                    if (tx.type === 'deposit') totalDeposits += tx.qty;
+                    if (tx.type === 'withdrawal') totalWithdrawals += tx.qty;
+
+                    const dateFormatted = new Date(tx.timestamp).toLocaleString();
+                    const badge = tx.type === 'deposit' 
+                        ? `<span class="badge-deposit">📥 Deposit</span>` 
+                        : `<span class="badge-withdrawal">📤 Withdrawal</span>`;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-size: 0.85rem; color: var(--text-muted);">${dateFormatted}</td>
+                            <td style="font-family: monospace; color: var(--secondary); font-weight: 600;">${tx.id}</td>
+                            <td>${badge}</td>
+                            <td style="font-weight: 500;">${tx.itemName}</td>
+                            <td style="font-weight: 700; color: ${tx.type === 'deposit' ? '#10b981' : '#ef4444'};">${tx.qty} units</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('period-total-deposits').innerText = `${totalDeposits} units`;
+            document.getElementById('period-total-withdrawals').innerText = `${totalWithdrawals} units`;
+            
+            const netShift = totalDeposits - totalWithdrawals;
+            const netElem = document.getElementById('period-net-shift');
+            netElem.innerText = `${netShift >= 0 ? '+' : ''}${netShift} units`;
+            netElem.style.color = netShift >= 0 ? '#818cf8' : '#ef4444';
+        }
+
+        /* --- Page 3: Item-Wise Summary Breakdown --- */
+        function generateItemWiseSummary(filterText = "") {
+            const startVal = document.getElementById('item-summary-start-date').value;
+            const endVal = document.getElementById('item-summary-end-date').value;
+
+            const tbody = document.getElementById('item-wise-summary-list');
+            tbody.innerHTML = '';
+
+            if (!startVal || !endVal) return;
+
+            const startDate = new Date(startVal + "T00:00:00");
+            const endDate = new Date(endVal + "T23:59:59");
+
+            const periodTx = transactions.filter(t => {
+                const txDate = new Date(t.timestamp);
+                return txDate >= startDate && txDate <= endDate;
+            });
+
+            // Map item metrics
+            const itemMap = {};
+            inventory.forEach(inv => {
+                itemMap[inv.name.toLowerCase()] = {
+                    name: inv.name,
+                    deposits: 0,
+                    withdrawals: 0,
+                    currentQty: inv.qty
+                };
+            });
+
+            periodTx.forEach(tx => {
+                const key = tx.itemName.toLowerCase();
+                if (!itemMap[key]) {
+                    itemMap[key] = { name: tx.itemName, deposits: 0, withdrawals: 0, currentQty: 0 };
+                }
+                if (tx.type === 'deposit') itemMap[key].deposits += tx.qty;
+                if (tx.type === 'withdrawal') itemMap[key].withdrawals += tx.qty;
+            });
+
+            const itemsList = Object.values(itemMap).filter(i => 
+                i.name.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            if (itemsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No items match search filter.</td></tr>`;
+                return;
+            }
+
+            itemsList.forEach(item => {
+                const netChange = item.deposits - item.withdrawals;
+                const netColor = netChange >= 0 ? '#34d399' : '#f87171';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.name}</td>
+                        <td style="color: #10b981; font-weight: 700;">+${item.deposits} units</td>
+                        <td style="color: #ef4444; font-weight: 700;">-${item.withdrawals} units</td>
+                        <td style="color: ${netColor}; font-weight: 700;">${netChange >= 0 ? '+' : ''}${netChange} units</td>
+                        <td style="font-weight: 700; color: #a5b4fc;">${item.currentQty} units</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterItemWiseSummary() {
+            const val = document.getElementById('search-item-summary').value;
+            generateItemWiseSummary(val);
+        }
+
+        // --- Core Admin Functions ---
         function renderAdmin() {
             renderInventoryList();
+            renderPendingBreakdown();
             renderAdminRequests();
             updateAdminStats();
+            generatePeriodSummary();
+            generateItemWiseSummary();
         }
 
         function updateAdminStats() {
             document.getElementById('stat-total-items').innerText = inventory.length;
-            
-            const totalStock = inventory.reduce((sum, item) => sum + parseInt(item.qty), 0);
-            document.getElementById('stat-total-stock').innerText = totalStock;
 
-            const pending = requests.filter(r => r.status === 'Pending').length;
-            document.getElementById('stat-pending-req').innerText = pending;
+            const lowStockCount = inventory.filter(item => item.qty <= (item.minQty || 5)).length;
+            document.getElementById('stat-low-stock').innerText = lowStockCount;
+
+            const pendingReqs = requests.filter(r => r.status === 'Pending');
+            document.getElementById('stat-pending-req').innerText = pendingReqs.length;
         }
 
         function addItem() {
             const name = document.getElementById('new-item-name').value.trim();
             const qty = parseInt(document.getElementById('new-item-qty').value);
+            const minQty = parseInt(document.getElementById('new-item-min-qty').value) || 5;
 
             if (!name || isNaN(qty) || qty < 0) {
                 customAlert("Please input valid asset parameters.", "error");
@@ -495,17 +936,25 @@
             }
 
             const newItem = {
-                id: 'NX-' + Math.floor(Math.random() * 9000 + 1000), // Looks cooler like NX-4521
+                id: 'NX-' + Math.floor(Math.random() * 9000 + 1000),
                 name: name,
-                qty: qty
+                qty: qty,
+                minQty: minQty
             };
 
             inventory.push(newItem);
+            if (qty > 0) logTransaction('deposit', name, qty);
+
             saveData();
             renderInventoryList();
+            renderPendingBreakdown();
+            generatePeriodSummary();
+            generateItemWiseSummary();
             
             document.getElementById('new-item-name').value = '';
             document.getElementById('new-item-qty').value = '';
+            document.getElementById('new-item-min-qty').value = '5';
+            
             customAlert(`Asset ${name} added to database.`, "success");
         }
 
@@ -518,20 +967,39 @@
                 customAlert("Stock cannot be negative.", "warning");
                 return;
             }
+
+            if (changeAmount > 0) {
+                logTransaction('deposit', item.name, changeAmount);
+            } else if (changeAmount < 0) {
+                logTransaction('withdrawal', item.name, Math.abs(changeAmount));
+            }
             
             item.qty = newQty;
             inputField.value = newQty;
             saveData();
-            customAlert(`Stock updated for ${item.name}`, "success");
+            renderInventoryList();
+            renderPendingBreakdown();
+            generatePeriodSummary();
+            generateItemWiseSummary();
         }
 
         function updateDirectQty(id, val) {
             const item = inventory.find(i => i.id === id);
             const newQty = Math.max(0, parseInt(val) || 0);
+            const diff = newQty - item.qty;
+
+            if (diff > 0) {
+                logTransaction('deposit', item.name, diff);
+            } else if (diff < 0) {
+                logTransaction('withdrawal', item.name, Math.abs(diff));
+            }
+
             item.qty = newQty;
             saveData();
             renderInventoryList();
-            customAlert(`Stock updated to ${newQty}`, "success");
+            renderPendingBreakdown();
+            generatePeriodSummary();
+            generateItemWiseSummary();
         }
 
         function renderInventoryList(filterText = "") {
@@ -539,8 +1007,7 @@
             tbody.innerHTML = '';
 
             const filtered = inventory.filter(item => 
-                item.name.toLowerCase().includes(filterText.toLowerCase()) || 
-                item.id.toLowerCase().includes(filterText.toLowerCase())
+                item.name.toLowerCase().includes(filterText.toLowerCase())
             );
 
             if (filtered.length === 0) {
@@ -549,17 +1016,26 @@
             }
 
             filtered.forEach(item => {
+                const limit = item.minQty || 5;
+                let warningBadge = `<span class="badge-ok">Optimal</span>`;
+                
+                if (item.qty === 0) {
+                    warningBadge = `<span class="badge-danger">CRITICAL (Out of Stock)</span>`;
+                } else if (item.qty <= limit) {
+                    warningBadge = `<span class="badge-warning">⚠️ Low Stock (&le; ${limit})</span>`;
+                }
+
                 tbody.innerHTML += `
                     <tr>
-                        <td style="font-family: monospace; color: var(--primary);">${item.id}</td>
-                        <td style="font-weight: 500;">${item.name}</td>
+                        <td style="font-weight: 600;">${item.name}</td>
                         <td>
                             <div class="qty-controls">
-                                <button onclick="updateQty('${item.id}', -1)">-</button>
+                                <button onclick="updateQty('${item.id}', -1)">−</button>
                                 <input type="number" id="qty-input-${item.id}" value="${item.qty}" onchange="updateDirectQty('${item.id}', this.value)">
                                 <button onclick="updateQty('${item.id}', 1)">+</button>
                             </div>
                         </td>
+                        <td>${warningBadge}</td>
                         <td>
                             <button class="btn-small btn-danger" onclick="deleteItem('${item.id}')">Purge</button>
                         </td>
@@ -569,67 +1045,175 @@
         }
 
         function filterInventory() {
-            const searchVal = document.getElementById('search-inventory').value;
-            renderInventoryList(searchVal);
+            renderInventoryList(document.getElementById('search-inventory').value);
         }
 
         function deleteItem(id) {
             inventory = inventory.filter(i => i.id !== id);
             saveData();
             renderInventoryList();
+            renderPendingBreakdown();
+            generateItemWiseSummary();
             customAlert("Asset purged from database.", "warning");
         }
 
-        function renderAdminRequests() {
-            const tbody = document.getElementById('admin-requests-list');
+        function renderPendingBreakdown(filterText = "") {
+            const tbody = document.getElementById('admin-pending-breakdown-list');
             tbody.innerHTML = '';
 
-            const sortedReqs = [...requests].sort((a,b) => a.status === 'Pending' ? -1 : 1);
+            const pendingMap = {};
 
-            if(sortedReqs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Queue is empty.</td></tr>`;
+            requests.filter(r => r.status === 'Pending').forEach(req => {
+                req.items.forEach(reqItem => {
+                    const key = reqItem.itemId || reqItem.itemName.toLowerCase();
+                    if (!pendingMap[key]) {
+                        const invItem = inventory.find(i => i.id === reqItem.itemId || i.name.toLowerCase() === reqItem.itemName.toLowerCase());
+                        pendingMap[key] = {
+                            id: reqItem.itemId,
+                            name: reqItem.itemName,
+                            pendingQty: 0,
+                            availableQty: invItem ? invItem.qty : 0
+                        };
+                    }
+                    pendingMap[key].pendingQty += parseInt(reqItem.qty || 0);
+                });
+            });
+
+            const pendingList = Object.values(pendingMap).filter(item => 
+                item.name.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            if (pendingList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No pending item requests match your search.</td></tr>`;
+                return;
             }
 
-            sortedReqs.forEach(req => {
-                let actions = '<span style="color:var(--text-muted)">Locked</span>';
-                if (req.status === 'Pending') {
-                    actions = `
-                        <div style="display:flex; gap: 8px;">
-                            <button class="btn-small btn-success" onclick="manageRequest('${req.id}', 'Approved')">Approve</button>
-                            <button class="btn-small btn-danger" onclick="manageRequest('${req.id}', 'Rejected')">Reject</button>
-                        </div>
-                    `;
-                }
+            pendingList.forEach(item => {
+                const isShortage = item.availableQty < item.pendingQty;
+                const statusBadge = isShortage
+                    ? `<span class="badge-danger">⚠️ Shortage (Short by ${item.pendingQty - item.availableQty})</span>`
+                    : `<span class="badge-ok">✅ Stock Ready</span>`;
 
                 tbody.innerHTML += `
                     <tr>
-                        <td style="text-transform: capitalize; font-weight: 500;">${req.user}</td>
-                        <td>${req.itemName}</td>
-                        <td>${req.qty}</td>
-                        <td><span class="status ${req.status.toLowerCase()}">${req.status}</span></td>
-                        <td>${actions}</td>
+                        <td style="font-weight: 600; color: var(--text-main);">${item.name}</td>
+                        <td style="font-weight: 700; color: #ec4899; font-size: 1.05rem;">${item.pendingQty} units</td>
+                        <td style="font-weight: 500;">${item.availableQty} units</td>
+                        <td>${statusBadge}</td>
                     </tr>
                 `;
             });
         }
 
+        function filterPendingBreakdown() {
+            renderPendingBreakdown(document.getElementById('search-pending-breakdown').value);
+        }
+
+        function renderAdminRequests() {
+            const container = document.getElementById('admin-requests-container');
+            container.innerHTML = '';
+
+            if (requests.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">Requisition queue is empty.</div>`;
+                return;
+            }
+
+            const requestsByUser = requests.reduce((acc, req) => {
+                if (!acc[req.user]) acc[req.user] = [];
+                acc[req.user].push(req);
+                return acc;
+            }, {});
+
+            Object.keys(requestsByUser).forEach(username => {
+                const userReqs = requestsByUser[username];
+                const pendingCount = userReqs.filter(r => r.status === 'Pending').length;
+
+                let userCardHtml = `
+                    <div class="user-group-card">
+                        <div class="user-group-header">
+                            <div class="user-badge">
+                                <div class="user-badge-icon">${username.charAt(0).toUpperCase()}</div>
+                                <span>${username}</span>
+                            </div>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">
+                                ${userReqs.length} total request(s) • <strong style="color:var(--warning);">${pendingCount} pending</strong>
+                            </span>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Requisition ID</th>
+                                        <th>Requested Asset List</th>
+                                        <th>Status</th>
+                                        <th>Authorization</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                userReqs.forEach(req => {
+                    let actions = '<span style="color:var(--text-muted)">Processed</span>';
+                    if (req.status === 'Pending') {
+                        actions = `
+                            <div style="display:flex; gap: 8px;">
+                                <button class="btn-small btn-success" onclick="manageRequest('${req.id}', 'Approved')">Approve All</button>
+                                <button class="btn-small btn-danger" onclick="manageRequest('${req.id}', 'Rejected')">Reject All</button>
+                            </div>
+                        `;
+                    }
+
+                    let itemsListHtml = '<div class="item-list-badge">';
+                    req.items.forEach(i => {
+                        itemsListHtml += `
+                            <div class="item-row-detail">
+                                <span>${i.itemName}</span>
+                                <strong style="color: var(--primary);">${i.qty} units</strong>
+                            </div>
+                        `;
+                    });
+                    itemsListHtml += '</div>';
+
+                    userCardHtml += `
+                        <tr>
+                            <td style="font-family: monospace; color: var(--secondary); font-weight: 600;">${req.id}</td>
+                            <td>${itemsListHtml}</td>
+                            <td><span class="status ${req.status.toLowerCase()}">${req.status}</span></td>
+                            <td>${actions}</td>
+                        </tr>
+                    `;
+                });
+
+                userCardHtml += `</tbody></table></div></div>`;
+                container.innerHTML += userCardHtml;
+            });
+        }
+
         function manageRequest(reqId, newStatus) {
             const req = requests.find(r => r.id === reqId);
-            const item = inventory.find(i => i.id === req.itemId);
+            if (!req) return;
 
             if (newStatus === 'Approved') {
-                if (!item) {
-                    customAlert("Asset no longer exists in database.", "error");
-                    req.status = 'Rejected';
-                } else if (item.qty < req.qty) {
-                    customAlert("Insufficient stock to authorize requisition.", "error");
-                    return;
-                } else {
-                    item.qty -= req.qty;
-                    customAlert("Requisition authorized.", "success");
+                for (let reqItem of req.items) {
+                    const invItem = inventory.find(i => i.id === reqItem.itemId || i.name.toLowerCase() === reqItem.itemName.toLowerCase());
+                    if (!invItem) {
+                        customAlert(`Asset "${reqItem.itemName}" no longer exists in database.`, "error");
+                        return;
+                    }
+                    if (invItem.qty < reqItem.qty) {
+                        customAlert(`Insufficient stock for "${reqItem.itemName}" (Available: ${invItem.qty}, Requested: ${reqItem.qty}).`, "error");
+                        return;
+                    }
                 }
+
+                for (let reqItem of req.items) {
+                    const invItem = inventory.find(i => i.id === reqItem.itemId || i.name.toLowerCase() === reqItem.itemName.toLowerCase());
+                    invItem.qty -= reqItem.qty;
+                    logTransaction('withdrawal', invItem.name, reqItem.qty);
+                }
+                customAlert(`Requisition list [${req.id}] authorized successfully.`, "success");
             } else {
-                customAlert("Requisition rejected.", "warning");
+                customAlert(`Requisition list [${req.id}] rejected.`, "warning");
             }
 
             req.status = newStatus;
@@ -637,7 +1221,7 @@
             renderAdmin(); 
         }
 
-        // --- User Functions ---
+        // --- User Portal Functions ---
         function renderUser() {
             const select = document.getElementById('request-item-select');
             select.innerHTML = '<option value="">-- Select Asset --</option>';
@@ -651,36 +1235,82 @@
             renderUserRequests();
         }
 
-        function submitRequest() {
+        function addToCart() {
             const itemId = document.getElementById('request-item-select').value;
             const qty = parseInt(document.getElementById('request-item-qty').value);
 
             if (!itemId || isNaN(qty) || qty <= 0) {
-                customAlert("Invalid requisition parameters.", "error");
+                customAlert("Invalid asset selection or unit parameters.", "error");
                 return;
             }
 
             const item = inventory.find(i => i.id === itemId);
-            if (qty > item.qty) {
+            const cartItem = currentCart.find(c => c.itemId === itemId);
+            const currentCartQty = cartItem ? cartItem.qty : 0;
+            
+            if ((qty + currentCartQty) > item.qty) {
                 customAlert(`Cannot exceed available stock [${item.qty}].`, "warning");
                 return;
             }
 
-            const newReq = {
+            if (cartItem) {
+                cartItem.qty += qty;
+            } else {
+                currentCart.push({ itemId: item.id, itemName: item.name, qty: qty });
+            }
+            
+            document.getElementById('request-item-qty').value = 1;
+            document.getElementById('request-item-select').value = '';
+            
+            renderCart();
+            customAlert(`${item.name} added to draft list.`, "success");
+        }
+
+        function removeFromCart(index) {
+            currentCart.splice(index, 1);
+            renderCart();
+        }
+
+        function renderCart() {
+            const tbody = document.getElementById('requisition-cart-list');
+            tbody.innerHTML = '';
+
+            if (currentCart.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding: 2rem;">Draft list is empty.</td></tr>`;
+                return;
+            }
+
+            currentCart.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="font-weight: 500;">${item.itemName}</td>
+                        <td>${item.qty}</td>
+                        <td><button class="btn-small btn-danger" onclick="removeFromCart(${index})">Remove</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function submitCart() {
+            if (currentCart.length === 0) {
+                customAlert("Cannot transmit an empty list.", "error");
+                return;
+            }
+
+            const newRequestBatch = {
                 id: 'LOG-' + Math.floor(Math.random() * 90000 + 10000),
                 user: currentUser.username,
-                itemId: item.id,
-                itemName: item.name,
-                qty: qty,
+                items: [...currentCart],
                 status: 'Pending'
             };
 
-            requests.push(newReq);
+            requests.push(newRequestBatch);
+            currentCart = [];
             saveData();
             
-            document.getElementById('request-item-qty').value = 1;
+            renderCart();
             renderUser();
-            customAlert("Requisition transmitted to Command.", "success");
+            customAlert("Requisition list successfully transmitted.", "success");
         }
 
         function renderUserRequests() {
@@ -690,15 +1320,26 @@
             const myRequests = requests.filter(r => r.user === currentUser.username).reverse();
 
             if(myRequests.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No log entries found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding: 2rem;">No log entries found.</td></tr>`;
+                return;
             }
 
             myRequests.forEach(req => {
+                let itemsListHtml = '<div class="item-list-badge">';
+                req.items.forEach(i => {
+                    itemsListHtml += `
+                        <div class="item-row-detail">
+                            <span>${i.itemName}</span>
+                            <strong style="color: var(--primary);">${i.qty} units</strong>
+                        </div>
+                    `;
+                });
+                itemsListHtml += '</div>';
+
                 tbody.innerHTML += `
                     <tr>
-                        <td style="font-family: monospace; color: var(--secondary);">${req.id}</td>
-                        <td style="font-weight: 500;">${req.itemName}</td>
-                        <td>${req.qty}</td>
+                        <td style="font-family: monospace; color: var(--secondary); font-weight: 600;">${req.id}</td>
+                        <td>${itemsListHtml}</td>
                         <td><span class="status ${req.status.toLowerCase()}">${req.status}</span></td>
                     </tr>
                 `;
