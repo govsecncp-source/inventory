@@ -267,8 +267,6 @@
         .badge-warning { background: rgba(245,158,11,0.25); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
         .badge-danger { background: rgba(239,68,68,0.25); color: #f87171; border: 1px solid rgba(239,68,68,0.4); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
         .badge-ok { background: rgba(16,185,129,0.15); color: #34d399; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; }
-        .badge-deposit { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.4); padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
-        .badge-withdrawal { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.75rem; }
 
         /* High Visibility Stock Controls */
         .qty-controls { 
@@ -385,7 +383,6 @@
             <!-- Page Navigation Bar -->
             <div class="admin-nav">
                 <div class="nav-tab active" onclick="switchAdminPage('page-overview', this)">Overview & Control</div>
-                <div class="nav-tab" onclick="switchAdminPage('page-periodic-summary', this)">Periodic Summary</div>
                 <div class="nav-tab" onclick="switchAdminPage('page-item-summary', this)">Item-Wise Breakdown</div>
             </div>
 
@@ -488,65 +485,7 @@
                 </div>
             </div>
 
-            <!-- PAGE 2: PERIODIC STOCK SUMMARY REPORT -->
-            <div id="page-periodic-summary" class="page-view">
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div>
-                            <h3 style="font-size: 1.3rem; color: #a5b4fc;">📈 Periodic Stock Summary & Audit Report</h3>
-                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
-                                Filter total stock deposits and withdrawals for a specific date range.
-                            </p>
-                        </div>
-                        <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
-                            <div style="display: flex; flex-direction: column; gap: 4px;">
-                                <label style="font-size: 0.75rem; color: var(--text-muted);">From Date:</label>
-                                <input type="date" id="summary-start-date" onchange="generatePeriodSummary()" style="padding: 0.5rem 0.8rem;">
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 4px;">
-                                <label style="font-size: 0.75rem; color: var(--text-muted);">To Date:</label>
-                                <input type="date" id="summary-end-date" onchange="generatePeriodSummary()" style="padding: 0.5rem 0.8rem;">
-                            </div>
-                            <button class="btn-small" onclick="generatePeriodSummary()" style="height: 38px;">Generate Report</button>
-                        </div>
-                    </div>
-
-                    <!-- Summary KPI Cards -->
-                    <div class="stats-grid" style="margin-bottom: 1.5rem;">
-                        <div class="card" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
-                            <span style="color: #34d399; font-size: 0.85rem; font-weight: 600;">📥 Total Stock Deposited</span>
-                            <h3 id="period-total-deposits" style="color: #10b981; font-size: 2rem; margin-top: 4px;">0 units</h3>
-                        </div>
-                        <div class="card" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);">
-                            <span style="color: #f87171; font-size: 0.85rem; font-weight: 600;">📤 Total Stock Withdrawn</span>
-                            <h3 id="period-total-withdrawals" style="color: #ef4444; font-size: 2rem; margin-top: 4px;">0 units</h3>
-                        </div>
-                        <div class="card" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3);">
-                            <span style="color: #a5b4fc; font-size: 0.85rem; font-weight: 600;">📊 Net Stock Movement</span>
-                            <h3 id="period-net-shift" style="color: #818cf8; font-size: 2rem; margin-top: 4px;">0 units</h3>
-                        </div>
-                    </div>
-
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Timestamp</th>
-                                    <th>Transaction ID</th>
-                                    <th>Type</th>
-                                    <th>Asset Designation</th>
-                                    <th>Units</th>
-                                </tr>
-                            </thead>
-                            <tbody id="period-transactions-list">
-                                <tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">Select dates to view transaction records.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PAGE 3: ITEM-WISE MOVEMENT SUMMARY -->
+            <!-- PAGE 2: ITEM-WISE MOVEMENT SUMMARY -->
             <div id="page-item-summary" class="page-view">
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
@@ -729,7 +668,6 @@
             document.getElementById(pageId).classList.add('active');
             if(tabElem) tabElem.classList.add('active');
 
-            if(pageId === 'page-periodic-summary') generatePeriodSummary();
             if(pageId === 'page-item-summary') generateItemWiseSummary();
         }
 
@@ -775,69 +713,12 @@
 
             const startStr = firstDay.toISOString().split('T')[0];
             const endStr = today.toISOString().split('T')[0];
-
-            document.getElementById('summary-start-date').value = startStr;
-            document.getElementById('summary-end-date').value = endStr;
             
             document.getElementById('item-summary-start-date').value = startStr;
             document.getElementById('item-summary-end-date').value = endStr;
         }
 
-        /* --- Page 2: Periodic Summary Generator --- */
-        function generatePeriodSummary() {
-            const startVal = document.getElementById('summary-start-date').value;
-            const endVal = document.getElementById('summary-end-date').value;
-
-            if (!startVal || !endVal) return;
-
-            const startDate = new Date(startVal + "T00:00:00");
-            const endDate = new Date(endVal + "T23:59:59");
-
-            const periodTx = transactions.filter(t => {
-                const txDate = new Date(t.timestamp);
-                return txDate >= startDate && txDate <= endDate;
-            });
-
-            let totalDeposits = 0;
-            let totalWithdrawals = 0;
-
-            const tbody = document.getElementById('period-transactions-list');
-            tbody.innerHTML = '';
-
-            if (periodTx.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding: 1.5rem;">No transaction logs found for the selected period.</td></tr>`;
-            } else {
-                periodTx.slice().reverse().forEach(tx => {
-                    if (tx.type === 'deposit') totalDeposits += tx.qty;
-                    if (tx.type === 'withdrawal') totalWithdrawals += tx.qty;
-
-                    const dateFormatted = new Date(tx.timestamp).toLocaleString();
-                    const badge = tx.type === 'deposit' 
-                        ? `<span class="badge-deposit">📥 Deposit</span>` 
-                        : `<span class="badge-withdrawal">📤 Withdrawal</span>`;
-
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="font-size: 0.85rem; color: var(--text-muted);">${dateFormatted}</td>
-                            <td style="font-family: monospace; color: var(--secondary); font-weight: 600;">${tx.id}</td>
-                            <td>${badge}</td>
-                            <td style="font-weight: 500;">${tx.itemName}</td>
-                            <td style="font-weight: 700; color: ${tx.type === 'deposit' ? '#10b981' : '#ef4444'};">${tx.qty} units</td>
-                        </tr>
-                    `;
-                });
-            }
-
-            document.getElementById('period-total-deposits').innerText = `${totalDeposits} units`;
-            document.getElementById('period-total-withdrawals').innerText = `${totalWithdrawals} units`;
-            
-            const netShift = totalDeposits - totalWithdrawals;
-            const netElem = document.getElementById('period-net-shift');
-            netElem.innerText = `${netShift >= 0 ? '+' : ''}${netShift} units`;
-            netElem.style.color = netShift >= 0 ? '#818cf8' : '#ef4444';
-        }
-
-        /* --- Page 3: Item-Wise Summary Breakdown --- */
+        /* --- Item-Wise Summary Breakdown --- */
         function generateItemWiseSummary(filterText = "") {
             const startVal = document.getElementById('item-summary-start-date').value;
             const endVal = document.getElementById('item-summary-end-date').value;
@@ -911,7 +792,6 @@
             renderPendingBreakdown();
             renderAdminRequests();
             updateAdminStats();
-            generatePeriodSummary();
             generateItemWiseSummary();
         }
 
@@ -948,7 +828,6 @@
             saveData();
             renderInventoryList();
             renderPendingBreakdown();
-            generatePeriodSummary();
             generateItemWiseSummary();
             
             document.getElementById('new-item-name').value = '';
@@ -979,7 +858,6 @@
             saveData();
             renderInventoryList();
             renderPendingBreakdown();
-            generatePeriodSummary();
             generateItemWiseSummary();
         }
 
@@ -998,7 +876,6 @@
             saveData();
             renderInventoryList();
             renderPendingBreakdown();
-            generatePeriodSummary();
             generateItemWiseSummary();
         }
 
