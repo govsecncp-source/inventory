@@ -13,7 +13,9 @@ const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/inventoryDB
 
 mongoose.connect(mongoURI, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    bufferCommands: false,
+    serverSelectionTimeoutMS: 5000
 })
 .then(() => console.log('Connected to MongoDB successfully!'))
 .catch(err => console.error('MongoDB connection error:', err));
