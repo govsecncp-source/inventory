@@ -21,3 +21,4 @@ function getSequelizeInstance() {
     }
     return sequelize;
 }
+module.exports = app;
