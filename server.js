@@ -1,138 +1,100 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+require('dotenv').config();
 
 const app = express();
-
-// Middleware
 app.use(express.json());
 app.use(cors());
 
-// Serverless MongoDB Connection Caching
-let isConnected = false;
+const PORT = process.env.PORT || 5000;
 
-async function connectDB() {
-    if (isConnected) return;
+async function startServer() {
     try {
-        await mongoose.connect(process.env.MONGO_URI);
-        isConnected = true;
-    } catch (error) {
-        console.error('Database connection error:', error);
-        throw error;
+        // Spin up local embedded MongoDB instance
+        const mongod = await MongoMemoryServer.create();
+        const uri = mongod.getUri();
+
+        // Connect Mongoose to the local embedded instance
+        await mongoose.connect(uri);
+        console.log('Connected to local embedded MongoDB successfully!');
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (err) {
+        console.error('Database connection error:', err);
     }
 }
 
-// Middleware to ensure database connection before handling requests
-app.use(async (req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (err) {
-        res.status(500).json({ error: "Database connection failed", details: err.message });
-    }
-});
+startServer();
 
-// Schemas & Models
+// Define Database Schemas
 const ItemSchema = new mongoose.Schema({
-    id: { type: String, required: true, unique: true },
-    name: { type: String, required: true },
-    qty: { type: Number, required: true, default: 0 }
+    id: String,
+    name: String,
+    qty: Number,
+    minQty: Number
 });
 
 const RequestSchema = new mongoose.Schema({
-    id: { type: String, required: true, unique: true },
-    user: { type: String, required: true },
-    itemId: { type: String, required: true },
-    itemName: { type: String, required: true },
-    qty: { type: Number, required: true },
-    status: { type: String, required: true, default: 'Pending' }
+    id: String,
+    user: String,
+    items: Array,
+    status: String
 });
 
-const Item = mongoose.models.Item || mongoose.model('Item', ItemSchema);
-const Request = mongoose.models.Request || mongoose.model('Request', RequestSchema);
-
-// Root Route - Serves the Frontend HTML Dashboard
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+const TransactionSchema = new mongoose.Schema({
+    id: String,
+    type: String,
+    itemName: String,
+    qty: Number,
+    timestamp: String
 });
 
-// Inventory Routes
-app.get('/api/inventory', async (req, res) => {
+const Item = mongoose.model('Item', ItemSchema);
+const Request = mongoose.model('Request', RequestSchema);
+const Transaction = mongoose.model('Transaction', TransactionSchema);
+
+// API Routes
+app.get('/api/data', async (req, res) => {
     try {
-        const items = await Item.find();
-        res.status(200).json(items);
+        const inventory = await Item.find();
+        const requests = await Request.find();
+        const transactions = await Transaction.find();
+        res.json({ inventory, requests, transactions });
     } catch (err) {
-        res.status(500).json({ error: "Failed to fetch inventory", details: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 
 app.post('/api/inventory', async (req, res) => {
     try {
-        const newItem = new Item(req.body);
-        await newItem.save();
-        res.status(201).json(newItem);
+        await Item.deleteMany({});
+        const savedItems = await Item.insertMany(req.body);
+        res.json(savedItems);
     } catch (err) {
-        res.status(400).json({ error: "Failed to create item", details: err.message });
-    }
-});
-
-app.put('/api/inventory/:id', async (req, res) => {
-    try {
-        const updated = await Item.findOneAndUpdate(
-            { id: req.params.id }, 
-            { qty: req.body.qty }, 
-            { new: true, runValidators: true }
-        );
-        if (!updated) return res.status(404).json({ error: "Item not found" });
-        res.status(200).json(updated);
-    } catch (err) {
-        res.status(400).json({ error: "Failed to update item", details: err.message });
-    }
-});
-
-app.delete('/api/inventory/:id', async (req, res) => {
-    try {
-        const deleted = await Item.findOneAndDelete({ id: req.params.id });
-        if (!deleted) return res.status(404).json({ error: "Item not found" });
-        res.status(200).json({ success: true, message: "Item deleted successfully" });
-    } catch (err) {
-        res.status(500).json({ error: "Failed to delete item", details: err.message });
-    }
-});
-
-// Request Routes
-app.get('/api/requests', async (req, res) => {
-    try {
-        const reqs = await Request.find();
-        res.status(200).json(reqs);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to fetch requests", details: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 
 app.post('/api/requests', async (req, res) => {
     try {
-        const newRequest = new Request(req.body);
-        await newRequest.save();
-        res.status(201).json(newRequest);
+        await Request.deleteMany({});
+        const savedRequests = await Request.insertMany(req.body);
+        res.json(savedRequests);
     } catch (err) {
-        res.status(400).json({ error: "Failed to create request", details: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 
-app.put('/api/requests/:id', async (req, res) => {
+app.post('/api/transactions', async (req, res) => {
     try {
-        const updated = await Request.findOneAndUpdate(
-            { id: req.params.id }, 
-            { status: req.body.status }, 
-            { new: true, runValidators: true }
-        );
-        if (!updated) return res.status(404).json({ error: "Request not found" });
-        res.status(200).json(updated);
+        const newTx = new Transaction(req.body);
+        await newTx.save();
+        res.json(newTx);
     } catch (err) {
-        res.status(400).json({ error: "Failed to update request", details: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
-
-module.exports = app;
