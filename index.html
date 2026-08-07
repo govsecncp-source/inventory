@@ -623,40 +623,67 @@
             validUsers[`subject 0${i}`] = { role: "user", pass: `password0${i}` };
         }
 
-        let inventory = JSON.parse(localStorage.getItem('nexgen_inventory')) || [];
-        let rawRequests = JSON.parse(localStorage.getItem('nexgen_requests')) || [];
-        let transactions = JSON.parse(localStorage.getItem('nexgen_transactions')) || [];
-        
-        let requests = rawRequests.map(req => {
-            if (!req.items) {
-                return {
-                    id: req.id,
-                    user: req.user,
-                    items: [{ itemId: req.itemId, itemName: req.itemName, qty: req.qty }],
-                    status: req.status
-                };
-            }
-            return req;
-        });
-
+        let inventory = [];
+        let requests = [];
+        let transactions = [];
         let currentCart = [];
         let currentUser = null;
 
-        function saveData() {
-            localStorage.setItem('nexgen_inventory', JSON.stringify(inventory));
-            localStorage.setItem('nexgen_requests', JSON.stringify(requests));
-            localStorage.setItem('nexgen_transactions', JSON.stringify(transactions));
-            if(currentUser && currentUser.role === 'admin') updateAdminStats();
+        const API_URL = 'http://localhost:5000/api';
+
+        async function fetchBackendData() {
+            try {
+                const response = await fetch(`${API_URL}/data`);
+                const data = await response.json();
+                inventory = data.inventory || [];
+                requests = data.requests || [];
+                transactions = data.transactions || [];
+            } catch (err) {
+                console.error('Failed to sync with database server:', err);
+                customAlert('Could not connect to database server', 'error');
+            }
         }
 
-        function logTransaction(type, itemName, qty) {
-            transactions.push({
+        async function saveData() {
+            try {
+                await fetch(`${API_URL}/inventory`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(inventory)
+                });
+
+                await fetch(`${API_URL}/requests`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requests)
+                });
+
+                if(currentUser && currentUser.role === 'admin') updateAdminStats();
+            } catch (err) {
+                console.error('Error saving data to backend:', err);
+            }
+        }
+
+        async function logTransaction(type, itemName, qty) {
+            const newTx = {
                 id: 'TX-' + Math.floor(Math.random() * 90000 + 10000),
                 type: type,
                 itemName: itemName,
                 qty: Math.abs(parseInt(qty)),
                 timestamp: new Date().toISOString()
-            });
+            };
+            
+            transactions.push(newTx);
+
+            try {
+                await fetch(`${API_URL}/transactions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newTx)
+                });
+            } catch (err) {
+                console.error('Error saving transaction:', err);
+            }
             saveData();
         }
 
@@ -671,12 +698,15 @@
             if(pageId === 'page-item-summary') generateItemWiseSummary();
         }
 
-        function login() {
+        async function login() {
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value;
 
             if (validUsers[user] && validUsers[user].pass === pass) {
                 currentUser = { username: user, role: validUsers[user].role };
+                
+                await fetchBackendData();
+
                 document.getElementById('login-view').style.display = 'none';
                 customAlert('Authentication successful', 'success');
                 
@@ -736,7 +766,6 @@
                 return txDate >= startDate && txDate <= endDate;
             });
 
-            // Map item metrics
             const itemMap = {};
             inventory.forEach(inv => {
                 itemMap[inv.name.toLowerCase()] = {
