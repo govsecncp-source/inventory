@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -8,62 +7,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection (Supports both local and cloud MongoDB Atlas via process.env.MONGO_URI)
-const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/inventoryDB';
-
-mongoose.connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    bufferCommands: false,
-    serverSelectionTimeoutMS: 5000
-})
-.then(() => console.log('Connected to MongoDB successfully!'))
-.catch(err => console.error('MongoDB connection error:', err));
-
-// Define Schemas & Models
-const inventorySchema = new mongoose.Schema({
-    id: String,
-    name: String,
-    qty: Number,
-    minQty: Number
-});
-
-const requestSchema = new mongoose.Schema({
-    id: String,
-    user: String,
-    items: Array,
-    status: String
-});
-
-const transactionSchema = new mongoose.Schema({
-    id: String,
-    type: String,
-    itemName: String,
-    qty: Number,
-    timestamp: String
-});
-
-const InventoryItem = mongoose.model('InventoryItem', inventorySchema);
-const RequestItem = mongoose.model('RequestItem', requestSchema);
-const Transaction = mongoose.model('Transaction', transactionSchema);
+// In-memory data store for serverless execution
+let memoryData = {
+    inventory: [],
+    requests: [],
+    transactions: []
+};
 
 // API Endpoints
-app.get('/api/data', async (req, res) => {
-    try {
-        const inventory = await InventoryItem.find({});
-        const requests = await RequestItem.find({});
-        const transactions = await Transaction.find({});
-        res.json({ inventory, requests, transactions });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+app.get('/api/data', (req, res) => {
+    res.json(memoryData);
 });
 
-app.post('/api/inventory', async (req, res) => {
+app.post('/api/inventory', (req, res) => {
     try {
-        await InventoryItem.deleteMany({});
-        if (Array.isArray(req.body) && req.body.length > 0) {
-            await InventoryItem.insertMany(req.body);
+        if (Array.isArray(req.body)) {
+            memoryData.inventory = req.body;
         }
         res.json({ success: true });
     } catch (err) {
@@ -71,11 +30,10 @@ app.post('/api/inventory', async (req, res) => {
     }
 });
 
-app.post('/api/requests', async (req, res) => {
+app.post('/api/requests', (req, res) => {
     try {
-        await RequestItem.deleteMany({});
-        if (Array.isArray(req.body) && req.body.length > 0) {
-            await RequestItem.insertMany(req.body);
+        if (Array.isArray(req.body)) {
+            memoryData.requests = req.body;
         }
         res.json({ success: true });
     } catch (err) {
@@ -83,10 +41,11 @@ app.post('/api/requests', async (req, res) => {
     }
 });
 
-app.post('/api/transactions', async (req, res) => {
+app.post('/api/transactions', (req, res) => {
     try {
-        const newTx = new Transaction(req.body);
-        await newTx.save();
+        if (req.body) {
+            memoryData.transactions.push(req.body);
+        }
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
