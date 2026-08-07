@@ -7,43 +7,73 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connect to PostgreSQL using your connection string from environment variables
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
-        }
+// Initialize Sequelize with connection pooling parameters for serverless
+let sequelize;
+
+function getSequelizeInstance() {
+    if (!sequelize) {
+        sequelize = new Sequelize(process.env.DATABASE_URL, {
+            dialect: 'postgres',
+            dialectOptions: {
+                ssl: {
+                    require: true,
+                    rejectUnauthorized: false
+                }
+            },
+            pool: {
+                max: 2,
+                min: 0,
+                acquire: 30000,
+                idle: 10000
+            }
+        });
     }
-});
+    return sequelize;
+}
 
-// Define Models (Tables)
-const InventoryItem = sequelize.define('InventoryItem', {
-    itemId: { type: DataTypes.STRING, primaryKey: true },
-    name: { type: DataTypes.STRING },
-    qty: { type: DataTypes.INTEGER },
-    minQty: { type: DataTypes.INTEGER }
-});
+// Define Models dynamically per request or lazily
+let modelsInitialized = false;
+let InventoryItem, RequestItem, Transaction;
 
-const RequestItem = sequelize.define('RequestItem', {
-    requestId: { type: DataTypes.STRING, primaryKey: true },
-    user: { type: DataTypes.STRING },
-    items: { type: DataTypes.JSON },
-    status: { type: DataTypes.STRING }
-});
+function initModels(seq) {
+    if (modelsInitialized) return;
+    
+    InventoryItem = seq.define('InventoryItem', {
+        itemId: { type: DataTypes.STRING, primaryKey: true },
+        name: { type: DataTypes.STRING },
+        qty: { type: DataTypes.INTEGER },
+        minQty: { type: DataTypes.INTEGER }
+    });
 
-const Transaction = sequelize.define('Transaction', {
-    transactionId: { type: DataTypes.STRING, primaryKey: true },
-    type: { type: DataTypes.STRING },
-    itemName: { type: DataTypes.STRING },
-    qty: { type: DataTypes.INTEGER },
-    timestamp: { type: DataTypes.STRING }
-});
+    RequestItem = seq.define('RequestItem', {
+        requestId: { type: DataTypes.STRING, primaryKey: true },
+        user: { type: DataTypes.STRING },
+        items: { type: DataTypes.JSON },
+        status: { type: DataTypes.STRING }
+    });
 
-// Sync database tables
-sequelize.sync().then(() => {
-    console.log('Database synced successfully!');
+    Transaction = seq.define('Transaction', {
+        transactionId: { type: DataTypes.STRING, primaryKey: true },
+        type: { type: DataTypes.STRING },
+        itemName: { type: DataTypes.STRING },
+        qty: { type: DataTypes.INTEGER },
+        timestamp: { type: DataTypes.STRING }
+    });
+
+    modelsInitialized = true;
+}
+
+// Middleware to ensure DB connection before handling API routes
+app.use(async (req, res, next) => {
+    try {
+        const seq = getSequelizeInstance();
+        initModels(seq);
+        await seq.authenticate();
+        next();
+    } catch (err) {
+        console.error('Database connection middleware error:', err);
+        res.status(500).json({ error: 'Database connection failed: ' + err.message });
+    }
 });
 
 // API Endpoints
