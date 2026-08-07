@@ -1,51 +1,39 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 require('dotenv').config();
 
 const app = express();
-app.use(express.json());
+
 app.use(cors());
+app.use(express.json());
 
-const PORT = process.env.PORT || 5000;
+// MongoDB Connection (Supports both local and cloud MongoDB Atlas via process.env.MONGO_URI)
+const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/inventoryDB';
 
-async function startServer() {
-    try {
-        // Spin up local embedded MongoDB instance
-        const mongod = await MongoMemoryServer.create();
-        const uri = mongod.getUri();
+mongoose.connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('Connected to MongoDB successfully!'))
+.catch(err => console.error('MongoDB connection error:', err));
 
-        // Connect Mongoose to the local embedded instance
-        await mongoose.connect(uri);
-        console.log('Connected to local embedded MongoDB successfully!');
-
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-        });
-    } catch (err) {
-        console.error('Database connection error:', err);
-    }
-}
-
-startServer();
-
-// Define Database Schemas
-const ItemSchema = new mongoose.Schema({
+// Define Schemas & Models
+const inventorySchema = new mongoose.Schema({
     id: String,
     name: String,
     qty: Number,
     minQty: Number
 });
 
-const RequestSchema = new mongoose.Schema({
+const requestSchema = new mongoose.Schema({
     id: String,
     user: String,
     items: Array,
     status: String
 });
 
-const TransactionSchema = new mongoose.Schema({
+const transactionSchema = new mongoose.Schema({
     id: String,
     type: String,
     itemName: String,
@@ -53,16 +41,16 @@ const TransactionSchema = new mongoose.Schema({
     timestamp: String
 });
 
-const Item = mongoose.model('Item', ItemSchema);
-const Request = mongoose.model('Request', RequestSchema);
-const Transaction = mongoose.model('Transaction', TransactionSchema);
+const InventoryItem = mongoose.model('InventoryItem', inventorySchema);
+const RequestItem = mongoose.model('RequestItem', requestSchema);
+const Transaction = mongoose.model('Transaction', transactionSchema);
 
-// API Routes
+// API Endpoints
 app.get('/api/data', async (req, res) => {
     try {
-        const inventory = await Item.find();
-        const requests = await Request.find();
-        const transactions = await Transaction.find();
+        const inventory = await InventoryItem.find({});
+        const requests = await RequestItem.find({});
+        const transactions = await Transaction.find({});
         res.json({ inventory, requests, transactions });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -71,9 +59,11 @@ app.get('/api/data', async (req, res) => {
 
 app.post('/api/inventory', async (req, res) => {
     try {
-        await Item.deleteMany({});
-        const savedItems = await Item.insertMany(req.body);
-        res.json(savedItems);
+        await InventoryItem.deleteMany({});
+        if (Array.isArray(req.body) && req.body.length > 0) {
+            await InventoryItem.insertMany(req.body);
+        }
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -81,9 +71,11 @@ app.post('/api/inventory', async (req, res) => {
 
 app.post('/api/requests', async (req, res) => {
     try {
-        await Request.deleteMany({});
-        const savedRequests = await Request.insertMany(req.body);
-        res.json(savedRequests);
+        await RequestItem.deleteMany({});
+        if (Array.isArray(req.body) && req.body.length > 0) {
+            await RequestItem.insertMany(req.body);
+        }
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -93,8 +85,18 @@ app.post('/api/transactions', async (req, res) => {
     try {
         const newTx = new Transaction(req.body);
         await newTx.save();
-        res.json(newTx);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Export app for Vercel Serverless deployment, and run standard listen locally if not on Vercel
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
